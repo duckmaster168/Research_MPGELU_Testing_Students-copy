@@ -14,7 +14,8 @@ class PGELU(nn.Module):
         self.beta_param = nn.Parameter(torch.tensor(beta_param, dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x * (1 + torch.tanh(self.alpha_param * x + self.beta_param * torch.pow(x, 3)))
+        output = torch.mul(x, (1 + torch.tanh(torch.mul(self.alpha_param, x) + torch.mul(self.beta_param, torch.pow(x, 3)))))
+        return output
 
 class LambdaGELU(nn.Module):
     '''
@@ -26,7 +27,8 @@ class LambdaGELU(nn.Module):
         self.lambda_param = nn.Parameter(torch.tensor(lambda_param, dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return 0.5 * x * (1.0 + torch.erf(self.lambda_param * x / np.sqrt(2)))
+        output = torch.mul(0.5 * x, (1.0 + torch.erf(torch.mul(self.lambda_param, x) / np.sqrt(2))))
+        return output
 
 class MPGELU(nn.Module):
     '''
@@ -41,15 +43,14 @@ class MPGELU(nn.Module):
 
     def get_lambda(self) -> torch.Tensor:
         if self.use_softplus:
-            # Ensure the returned tensor is on the same device as the parameter
             return 1.0 + F.softplus(self.s_param)
         else:
             return 1.0 + torch.log(torch.tensor(1.0, device=self.s_param.device) + torch.exp(self.s_param))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         lam = self.get_lambda()
-        return 0.5 * x * (1.0 + torch.erf(lam * x / np.sqrt(2)))
-
+        output = torch.mul(0.5 * x, (1.0 + torch.erf(torch.mul(lam, x) / np.sqrt(2))))
+        return output
 
 def get_activation(name: str):
     '''Factory function mapping identifier string to activation class.'''
